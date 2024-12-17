@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guess Results</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map"></div>
+  <h2 id="distance-text">Calculating...</h2>
+  <button onclick="window.location.href='index.html'">Play Again</button>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+  <script>
+    mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+    // Get stored guess coordinates
+    const guessCoords = JSON.parse(localStorage.getItem('guess'));
+    const actualCoords = [10.267, 15.633]; // Replace with actual coordinates
+
+    // Initialize map
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: actualCoords,
+      zoom: 2,
+    });
+
+    // Add markers
+    new mapboxgl.Marker({ color: 'red' }).setLngLat(actualCoords).addTo(map);
+    new mapboxgl.Marker({ color: 'blue' }).setLngLat(guessCoords).addTo(map);
+
+    // Draw a line between the two points
+    map.on('load', () => {
+      map.addSource('line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: [guessCoords, actualCoords],
+          },
+        },
+      });
+
+      map.addLayer({
+        id: 'line-layer',
+        type: 'line',
+        source: 'line',
+        layout: {},
+        paint: { 'line-color': '#ff0000', 'line-width': 4 },
+      });
+
+      // Calculate and display distance
+      const distance = turf.distance(guessCoords, actualCoords, { units: 'kilometers' });
+      document.getElementById('distance-text').innerText = `You were ${distance.toFixed(2)} km away!`;
+    });
+  </script>
+</body>
+</html>
+
